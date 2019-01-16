@@ -47,6 +47,8 @@ public class StatisticsCollectingHandler extends NullRecordHandler {
   private Map<Long, String> stringMap = new HashMap<>();
   private Map<String, TypeInfo> arrayInfoMap = new HashMap<>();
 
+  long totalInstance = 0;
+
   @Override
   public void stringInUTF8(long id, String data) {
     stringMap.put(id, data);
@@ -75,6 +77,11 @@ public class StatisticsCollectingHandler extends NullRecordHandler {
       Value<?>[] instanceFieldValues) {
     ClassInfo classInfo = (ClassInfo) classMap.get(classObjId);
     classInfo.instanceCount++;
+
+    totalInstance++;
+    if (totalInstance % 10000000 == 0) {
+      finished();
+    }
   }
 
   @Override
@@ -105,10 +112,21 @@ public class StatisticsCollectingHandler extends NullRecordHandler {
   
   @Override
   public void finished() {
+    System.out.println(totalInstance);
+    System.out.println("------------------------------------");
+
     Comparator<TypeInfo> totalSizeComparator = new Comparator<TypeInfo>() {
       @Override
       public int compare(TypeInfo cls1, TypeInfo cls2) {
-        return Ints.checkedCast(cls2.totalSize() - cls1.totalSize());
+        if (cls1.totalSize() < cls2.totalSize()) {
+          return -1;
+        }
+        else if (cls1.totalSize() > cls2.totalSize()) {
+          return 1;
+        }
+        else {
+          return 0;
+        }
       }
     };
     
@@ -121,6 +139,8 @@ public class StatisticsCollectingHandler extends NullRecordHandler {
       }
       System.out.println(typeInfo.toString());
     }
+
+    System.out.println("------------------------------------\n\n\n");
   }
    
 
